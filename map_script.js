@@ -55,29 +55,57 @@ var baseMaps = {
 
 const groups = {};
 
-window.loadMapData("data.xlsx", function(data, detail) {
+window.loadMapData("data.xlsx", function(data, detail, circles) {
     data.forEach(obj => {
         if (!groups[obj.Group]) {
             groups[obj.Group] = L.layerGroup().addTo(map);
         }
-        let icon = obj.iconPath ? L.icon({
-            iconUrl: obj.iconPath,
-            iconSize: [40, 40], // Размер иконки
-            iconAnchor: [40*0.2, 40], // Точка привязки иконки
-            popupAnchor: [0, -40] // Точка, откуда будет открываться всплывающее окно
-        }) : null;
-        // Создаем маркер
-        let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon } : {})
-        marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
-        groups[obj.Group].addLayer(marker);
-        marker.on('click', function(e) {
+        let map_object = Object();
+        if (obj.radius) {
+            let circle = L.circle([parseFloat(obj.x), parseFloat(obj.y)], obj.radius, {
+                color: obj.bColor || 'blue', // Цвет круга
+                fillColor: obj.fColor || 'blue', // Цвет заливки круга
+                fillOpacity: 0.5, // Прозрачность заливки
+                weight: 2 // Толщина границы круга
+            });
+            circle.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
+            map_object = circle;
+        } else if (obj.x1 && obj.y1) {
+            const rectnagleBounds = [
+                [parseFloat(obj.x), parseFloat(obj.y)],
+                [parseFloat(obj.x1), parseFloat(obj.y1)]
+            ]
+            let rectangle = L.rectangle(rectnagleBounds, {
+                color: obj.bColor || 'blue', // Цвет границы
+                fillColor: obj.fColor || 'blue', // Цвет заливки
+                fillOpacity: 0.5, // Прозрачность заливки
+                weight: 2 // Толщина границы
+            });
+            rectangle.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
+            map_object = rectangle;
+        } else {
+            let icon = obj.iconPath ? L.icon({
+                iconUrl: obj.iconPath,
+                iconSize: [40, 40], // Размер иконки
+                iconAnchor: [40*0.2, 40], // Точка привязки иконки
+                popupAnchor: [0, -40] // Точка, откуда будет открываться всплывающее окно
+            }) : null;
+            // Создаем маркер
+            let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon } : {})
+            marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
+            map_object = marker;
+        }
+        groups[obj.Group].addLayer(map_object);
+        map_object.on('click', function(e) {
             const closeButton = document.querySelector('#content-block .close-button');
             const contenBlock = document.querySelector('#content-block');
             const contentDiv = document.querySelector('#content');
             const head = contenBlock.querySelector('.head h2');
             contenBlock.classList.add('show');
             head.innerHTML = obj.Title;
-            const descriptions = detail.get(obj.id);
+
+            try {
+                const descriptions = detail.get(obj.id);
             
             contentDiv.innerHTML = '';
             
@@ -117,6 +145,11 @@ window.loadMapData("data.xlsx", function(data, detail) {
                     });
 });
             }
+            } catch {
+                html = `<p>Нет подробной информации для этого объекта.</p>`;
+                contentDiv.innerHTML = html;
+            }
+
             closeButton.addEventListener('click', function() {
                 document.querySelector('#content-block').classList.remove('show');
             });

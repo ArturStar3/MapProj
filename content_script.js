@@ -21,14 +21,6 @@ async function loadDataFromXLSX(filepath, callback) {
 
 
         data = getExcelData("Описание");
-        // const detailMap = new Map();
-        // data.forEach(row => {
-        //     const id = row.id;
-        //     if (!detailMap.has(id)) {
-        //         detailMap.set(id, []);
-        //     }
-        //     detailMap.get(id).push(row);
-        // });
 
         function groupSmart(data) {
             const result = new Map();
@@ -60,7 +52,6 @@ async function loadDataFromXLSX(filepath, callback) {
             return result;
         }
         const detailMap = groupSmart(data);
-        
 
         if (typeof callback === 'function') callback(xlsxObjects, detailMap); // Если есть коллбэк, вызываем его с данными
     } catch (error) {
