@@ -33,6 +33,7 @@ h1 {
 
 #content-block.show {
     display: flex;
+    flex-direction: column;
     z-index: 2;
     padding: 20px;
     background-color: rgba(255, 255, 255, 0.8);
@@ -52,8 +53,10 @@ h1 {
     height: 3rem;
 
     position: relative;
-    padding: 5px 15px 15px 0;
-    padding: 5px 15px 0 15px;
+    
+    
+
+
 }
 
 #content-block .head::after {

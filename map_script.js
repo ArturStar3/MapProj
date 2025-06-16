@@ -138,7 +138,7 @@ var samarkandFlagIcon = L.icon({
 
 // --- Маркер Самарканда ---
 // Координаты для Самарканда (например, рядом с площадью Регистан)
-var markerSamarkand = L.marker([39.6547, 67.0050], { icon: samarkandFlagIcon });
+var markerSamarkand = L.marker([39.6542, 66.9597], { icon: samarkandFlagIcon });
 
 // Добавьте всплывающее окно для маркера Самарканда
 markerSamarkand.bindPopup("<b>Самарканд</b><br>Город с богатой историей.").openPopup();
