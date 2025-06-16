@@ -36,7 +36,9 @@ markerTashkent.on('click', function(e) {
     // e - это объект события, содержащий информацию о клике
 
     // Пример 1: Простое всплывающее окно (alert)
-    alert("Вы кликнули на маркер Ташкент!")
+    // let content_block = document.querySelector('#content-block');
+    // content_block.classList.add('show');
+    window.showContentBlockWithData('data.xlsx')
     console.log("Маркер Ташкент был кликнут на координатах:", e.latlng);});
      // Вывод в консоль разработчика
 // Пример 5: Добавление элемента управления слоями (для включения/выключения разных типов данных)
