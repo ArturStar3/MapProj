@@ -78,13 +78,45 @@ window.loadMapData("data.xlsx", function(data, detail) {
             contenBlock.classList.add('show');
             head.innerHTML = obj.Title;
             const descriptions = detail.get(obj.id);
+            
             contentDiv.innerHTML = '';
             
-            for (item of descriptions) {
-                const html = `<h3>${item.Title}</h3><p>${item.Description}</p>`;
-                contentDiv.innerHTML += html;
+            for (items of descriptions) {
+                if (items[1][0].Category === 'img'){
+                    let img_html = '';
+                    for (item of items[1]) {
+                        img_html += `<img src="${item.Value}" alt="${obj.Title}">`;
+                    }
+                    const html = `<div class="img-container">${img_html}</div>`;
+                    contentDiv.innerHTML += `<h3>${items[0]}</h3>${html}`;
+                } else if (items[1].length > 1) {
+                        let html = `<h3>${items[0]}</h3><ul>`;
+                        console.log(items[1]);
+                        items[1].forEach(item => {
+                            html += `<li><b>${item.Category}</b>: ${item.Value}</li>`;
+                        })
+                        html += `</ul>`;
+                        contentDiv.innerHTML += html;
+                        
+                    }  else if (items[1][0].Category) {
+                        let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
+                        contentDiv.innerHTML += html;
+                    } else {
+                        let html = `<h3>${items[0]}</h3><p>${items[1][0].Value}</p>`;
+                        contentDiv.innerHTML += html;
+                }
+                document.querySelectorAll('.img-container img').forEach(img => {
+                    img.addEventListener('click', () => {
+                        if (img.requestFullscreen) {
+                            img.requestFullscreen();
+                        } else if (img.webkitRequestFullscreen) { // для Safari
+                            img.webkitRequestFullscreen();
+                        } else if (img.msRequestFullscreen) { // для IE11
+                            img.msRequestFullscreen();
+                        }
+                    });
+});
             }
-            // contentDiv.innerHTML = `<h2>${obj.Title}</h2><p>${obj.Description}</p>`;
             closeButton.addEventListener('click', function() {
                 document.querySelector('#content-block').classList.remove('show');
             });
