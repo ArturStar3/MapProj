@@ -28,6 +28,7 @@ h1 {
 
 #content-block {
     display: none;
+    overflow: auto;
 
 }
 

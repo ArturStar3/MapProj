@@ -20,13 +20,6 @@ var myLocalTiles = L.tileLayer('./Tiles/{z}/{x}/{y}.png', {
     maxZoom: 12  // Укажите максимальный зум, который вы сгенерировали
 }).addTo(map);
 
-//  Создаем LayerGroup для разных категорий объектов
-var firstMarkers = L.layerGroup();
-var secondMarkers = L.layerGroup();
-var thirdMarkers = L.layerGroup();
-
-
-
 // 3. Нанесение данных на карту (маркеры, круги, полигоны, GeoJSON - как было ранее)
 // ... (весь ваш код для маркеров, кругов, полигонов, GeoJSON) ...
 var markerTashkent = L.marker([41.2995, 69.2401]);
@@ -167,6 +160,8 @@ var baseMaps = {
 const groups = {};
 
 window.loadMapData("data.xlsx", function(data) {
+    console.log(data);
+    
     data.forEach(obj => {
         if (!groups[obj.Group]) {
             groups[obj.Group] = L.layerGroup().addTo(map);
@@ -179,7 +174,7 @@ window.loadMapData("data.xlsx", function(data) {
         }) : null;
         // Создаем маркер
         let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon } : {})
-        marker.bindPopup(`<b>${obj.Name}</b><br>${obj.Description}`);
+        marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
         groups[obj.Group].addLayer(marker);
     });
 
@@ -190,8 +185,7 @@ window.loadMapData("data.xlsx", function(data) {
             controlLayers.addOverlay(groups[groupName], groupName);
         }
     });
-    // controlLayers.addOverlay(groups["Ташкент2"], "Ташкент2");
-    // controlLayers.addOverlay(groups["Самарканд2"], "Самарканд2");
+
 });
 
 var overlayMaps = {
