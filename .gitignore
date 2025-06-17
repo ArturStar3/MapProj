@@ -1,0 +1,46 @@
+# --- Node ---
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# --- Сборка .exe ---
+*.exe
+*.dll
+*.bin
+
+# --- Logs ---
+logs/
+*.log
+log.txt
+
+# --- Операционные системы ---
+.DS_Store         # macOS
+Thumbs.db         # Windows
+ehthumbs.db
+desktop.ini
+
+# --- Visual Studio Code ---
+.vscode/
+.history/
+
+# --- Системные папки Python, если используешь ---
+__pycache__/
+*.py[cod]
+
+# --- Временные файлы ---
+*.swp
+*.tmp
+*.bak
+*.old
+
+# --- Архивы и сборки ---
+*.zip
+*.tar.gz
+
+# --- Файлы от pkg (если используются временные сборочные папки) ---
+.snapshot/
+build/
+dist/
+env/
+# --- Карты ---
+Tiles/
