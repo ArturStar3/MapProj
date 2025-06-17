@@ -1,3 +1,6 @@
+const markerHeight = 40; // высота вашей иконки (px)
+const iconWidth = 40;
+
 // Определите примерные максимальные границы для вашей карты.
 // Эти координаты должны охватывать всю область ваших скачанных тайлов.
 
@@ -5,6 +8,7 @@
 var southWest = L.latLng(37.0, 52.0); // Пример: Юго-западная граница
 var northEast = L.latLng(48.0, 83.0); // Пример: Северо-восточная граница
 var bounds = L.latLngBounds(southWest, northEast);
+const markersByCoords = {};
 
 var map = L.map('map', {
     maxBounds: bounds, // Ограничиваем карту этими границами
@@ -107,6 +111,16 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
             marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
             map_object = marker;
             markerCounts[key] = count + 1; // Увеличиваем счетчик для этого маркера
+            if (!markersByCoords[key]) markersByCoords[key] = [];
+            markersByCoords[key].push(marker);
+            if (icon && !marker._originalIconOptions) {
+                marker._originalIconOptions = {
+                    iconUrl: icon.options.iconUrl,
+                    iconSize: icon.options.iconSize,
+                    iconAnchor: [iconWidth / 2, markerHeight + 0.5*count * markerHeight], // фиксированная оригинальная anchor
+                    popupAnchor: icon.options.popupAnchor
+                };
+            }
             
         }
         groups[obj.Group].addLayer(map_object);
@@ -121,48 +135,49 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
             try {
                 const descriptions = detail.get(obj.id);
             
-            contentDiv.innerHTML = '';
+                contentDiv.innerHTML = '';
             
-            for (items of descriptions) {
-                if (items[1][0].Category === 'img'){
-                    let img_html = '';
-                    for (item of items[1]) {
-                        img_html += `<img src="${item.Value}" alt="${obj.Title}">`;
-                    }
-                    const html = `<div class="img-container">${img_html}</div>`;
-                    contentDiv.innerHTML += `<h3>${items[0]}</h3>${html}`;
-                } else if (items[1].length > 1) {
-                        let html = `<h3>${items[0]}</h3><ul>`;
-                        console.log(items[1]);
-                        items[1].forEach(item => {
-                            html += `<li><b>${item.Category}</b>: ${item.Value}</li>`;
-                        })
-                        html += `</ul>`;
-                        contentDiv.innerHTML += html;
-                        
-                    }  else if (items[1][0].Category) {
-                        let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
-                        contentDiv.innerHTML += html;
-                    } else {
-                        let html = `<h3>${items[0]}</h3><p>${items[1][0].Value}</p>`;
-                        contentDiv.innerHTML += html;
-                }
-                document.querySelectorAll('.img-container img').forEach(img => {
-                    img.addEventListener('click', () => {
-                        if (img.requestFullscreen) {
-                            img.requestFullscreen();
-                        } else if (img.webkitRequestFullscreen) { // для Safari
-                            img.webkitRequestFullscreen();
-                        } else if (img.msRequestFullscreen) { // для IE11
-                            img.msRequestFullscreen();
+                for (items of descriptions) {
+                    if (items[1][0].Category === 'img'){
+                        let img_html = '';
+                        for (item of items[1]) {
+                            img_html += `<img src="${item.Value}" alt="${obj.Title}">`;
                         }
+                        const html = `<div class="img-container">${img_html}</div>`;
+                        contentDiv.innerHTML += `<h3>${items[0]}</h3>${html}`;
+                    } else if (items[1].length > 1) {
+                            let html = `<h3>${items[0]}</h3><ul>`;
+                            console.log(items[1]);
+                            items[1].forEach(item => {
+                                html += `<li><b>${item.Category}</b>: ${item.Value}</li>`;
+                            })
+                            html += `</ul>`;
+                            contentDiv.innerHTML += html;
+                            
+                        }  else if (items[1][0].Category) {
+                            let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
+                            contentDiv.innerHTML += html;
+                        } else {
+                            let html = `<h3>${items[0]}</h3><p>${items[1][0].Value}</p>`;
+                            contentDiv.innerHTML += html;
+                    }
+                    document.querySelectorAll('.img-container img').forEach(img => {
+                        img.addEventListener('click', () => {
+                            if (img.requestFullscreen) {
+                                img.requestFullscreen();
+                            } else if (img.webkitRequestFullscreen) { // для Safari
+                                img.webkitRequestFullscreen();
+                            } else if (img.msRequestFullscreen) { // для IE11
+                                img.msRequestFullscreen();
+                            }
+                        });
                     });
-});
-            }
+                }
             } catch {
                 html = `<p>Нет подробной информации для этого объекта.</p>`;
                 contentDiv.innerHTML = html;
             }
+
 
             closeButton.addEventListener('click', function() {
                 document.querySelector('#content-block').classList.remove('show');
@@ -187,3 +202,41 @@ var overlayMaps = {
 
 var controlLayers = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
+function resetAllMarkersToOriginal() {
+    console.log("Resetting all markers to original icons");
+    
+    Object.values(markersByCoords).forEach(markerArr => {
+        markerArr.forEach(marker => {
+            if (marker._originalIconOptions) {
+                const orig = marker._originalIconOptions;
+                const origIcon = L.icon({
+                    iconUrl: orig.iconUrl,
+                    iconSize: orig.iconSize,
+                    iconAnchor: orig.iconAnchor,
+                    popupAnchor: orig.popupAnchor
+                });
+                marker.setIcon(origIcon);
+            }
+        });
+    });
+}
+map.on('overlayadd overlayremove', function() {
+    Object.keys(markersByCoords).forEach(key => {
+        // Получаем только видимые маркеры на этой точке
+        const visibleMarkers = markersByCoords[key].filter(m => map.hasLayer(m));
+        let count = 0;
+        visibleMarkers.forEach((marker, idx) => {
+            // Получаем текущую иконку
+            const icon = marker.options.icon;
+            // Создаём новую иконку с обновлённым anchor
+            const newIcon = L.icon({
+                iconUrl: icon.options.iconUrl,
+                iconSize: icon.options.iconSize,
+                iconAnchor: [icon.options.iconSize[0] / 2, icon.options.iconSize[1] + 0.5*count * icon.options.iconSize[1]],
+                popupAnchor: icon.options.popupAnchor
+            });
+            marker.setIcon(newIcon);
+            count++;
+        });
+    });
+});
