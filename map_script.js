@@ -1,5 +1,6 @@
 // Определите примерные максимальные границы для вашей карты.
 // Эти координаты должны охватывать всю область ваших скачанных тайлов.
+
 // Возможно, вам придется немного подкорректировать их для вашей конкретной территории.
 var southWest = L.latLng(37.0, 52.0); // Пример: Юго-западная граница
 var northEast = L.latLng(48.0, 83.0); // Пример: Северо-восточная граница
@@ -56,7 +57,17 @@ var baseMaps = {
 const groups = {};
 
 window.loadMapData("data.xlsx", function(data, detail, circles) {
+    const markerCounts = {}; // ключ: "lat,lng", значение: сколько маркеров уже есть на этой точке
+    const markerHeight = 40; // высота вашей иконки (px)
+    const iconWidth = 40;
+
     data.forEach(obj => {
+        const lat = parseFloat(obj.x);
+        const lng = parseFloat(obj.y);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const key = `${lat},${lng}`;
+        const count = markerCounts[key] || 0;
         if (!groups[obj.Group]) {
             groups[obj.Group] = L.layerGroup().addTo(map);
         }
@@ -84,16 +95,19 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
             rectangle.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
             map_object = rectangle;
         } else {
+            
             let icon = obj.iconPath ? L.icon({
                 iconUrl: obj.iconPath,
-                iconSize: [40, 40], // Размер иконки
-                iconAnchor: [40*0.2, 40], // Точка привязки иконки
-                popupAnchor: [0, -40] // Точка, откуда будет открываться всплывающее окно
+                iconSize: [iconWidth, markerHeight], // Размер иконки
+                iconAnchor: [iconWidth / 2, markerHeight + 0.5*count * markerHeight], // Точка привязки иконки
+                popupAnchor: [0, -markerHeight] // Точка, откуда будет открываться всплывающее окно
             }) : null;
             // Создаем маркер
             let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon } : {})
             marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
             map_object = marker;
+            markerCounts[key] = count + 1; // Увеличиваем счетчик для этого маркера
+            
         }
         groups[obj.Group].addLayer(map_object);
         map_object.on('click', function(e) {
