@@ -5,15 +5,15 @@ const iconWidth = 40;
 // Эти координаты должны охватывать всю область ваших скачанных тайлов.
 
 // Возможно, вам придется немного подкорректировать их для вашей конкретной территории.
-var southWest = L.latLng(37.0, 52.0); // Пример: Юго-западная граница
-var northEast = L.latLng(48.0, 83.0); // Пример: Северо-восточная граница
+var southWest = L.latLng(27.5, 45.0); // Пример: Юго-западная граница
+var northEast = L.latLng(55.5, 87.9); // Пример: Северо-восточная граница
 var bounds = L.latLngBounds(southWest, northEast);
 const markersByCoords = {};
 
 var map = L.map('map', {
     maxBounds: bounds, // Ограничиваем карту этими границами
-    minZoom: 7,        // Соответствует minZoom ваших тайлов
-    maxZoom: 12        // Соответствует maxZoom ваших тайлов
+    minZoom: 6,        // Соответствует minZoom ваших тайлов
+    maxZoom: 11       // Соответствует maxZoom ваших тайлов
 }).setView([41.2995, 69.2401], 8);
 
 // var map = L.map('map').setView([41.2995, 69.2401], 8);
@@ -22,7 +22,7 @@ var map = L.map('map', {
 var myLocalTiles = L.tileLayer('./Tiles/{z}/{x}/{y}.png', {
     attribution: 'Карта: © Мои тайлы из Maperitive',
     minZoom: 5, // Укажите минимальный зум, который вы сгенерировали
-    maxZoom: 12  // Укажите максимальный зум, который вы сгенерировали
+    maxZoom: 11  // Укажите максимальный зум, который вы сгенерировали
 }).addTo(map);
 
 //  Создаем LayerGroup для разных категорий объектов
@@ -103,7 +103,7 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
             let icon = obj.iconPath ? L.icon({
                 iconUrl: obj.iconPath,
                 iconSize: [iconWidth, markerHeight], // Размер иконки
-                iconAnchor: [iconWidth / 2, markerHeight + 0.5*count * markerHeight], // Точка привязки иконки
+                iconAnchor: [iconWidth / 8, markerHeight + 0.5*count * markerHeight], // Точка привязки иконки
                 popupAnchor: [0, -markerHeight] // Точка, откуда будет открываться всплывающее окно
             }) : null;
             // Создаем маркер
@@ -232,7 +232,7 @@ map.on('overlayadd overlayremove', function() {
             const newIcon = L.icon({
                 iconUrl: icon.options.iconUrl,
                 iconSize: icon.options.iconSize,
-                iconAnchor: [icon.options.iconSize[0] / 2, icon.options.iconSize[1] + 0.5*count * icon.options.iconSize[1]],
+                iconAnchor: [icon.options.iconSize[0] / 8, icon.options.iconSize[1] + 0.5*count * icon.options.iconSize[1]],
                 popupAnchor: icon.options.popupAnchor
             });
             marker.setIcon(newIcon);
