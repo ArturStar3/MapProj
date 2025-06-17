@@ -7,6 +7,8 @@ package-lock.json
 *.exe
 *.dll
 *.bin
+!server_js.exe
+!server_py.exe
 
 # --- Logs ---
 logs/
@@ -44,3 +46,4 @@ dist/
 env/
 # --- Карты ---
 Tiles/
+Tiles.zip
