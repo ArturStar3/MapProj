@@ -17,7 +17,7 @@ async function loadDataFromXLSX(filepath, callback) {
             return jsonData;
         }
  
-        xlsxObjects = getExcelData("Объекты")
+        xlsxObjects = getExcelData("Объекты").sort((a, b) => {return b.id - a.id;});
 
 
         data = getExcelData("Описание");

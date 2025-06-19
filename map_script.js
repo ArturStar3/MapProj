@@ -1,5 +1,5 @@
-const markerHeight = 40; // высота вашей иконки (px)
-const iconWidth = 40;
+const markerHeight = 60; // высота вашей иконки (px)
+const iconWidth = 60;
 
 // Определите примерные максимальные границы для вашей карты.
 // Эти координаты должны охватывать всю область ваших скачанных тайлов.
@@ -14,7 +14,7 @@ var map = L.map('map', {
     maxBounds: bounds, // Ограничиваем карту этими границами
     minZoom: 6,        // Соответствует minZoom ваших тайлов
     maxZoom: 11       // Соответствует maxZoom ваших тайлов
-}).setView([41.2995, 69.2401], 8);
+}).setView([41.2995, 69.2401], 7);
 
 // var map = L.map('map').setView([41.2995, 69.2401], 8);
 
@@ -62,8 +62,8 @@ const groups = {};
 
 window.loadMapData("data.xlsx", function(data, detail, circles) {
     const markerCounts = {}; // ключ: "lat,lng", значение: сколько маркеров уже есть на этой точке
-    const markerHeight = 40; // высота вашей иконки (px)
-    const iconWidth = 40;
+    // const markerHeight = 40; // высота вашей иконки (px)
+    // const iconWidth = 40;
 
     data.forEach(obj => {
         const lat = parseFloat(obj.x);
@@ -99,18 +99,27 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
             rectangle.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
             map_object = rectangle;
         } else {
+            let scale = obj.scale || 1;
+            let flag = obj.flag;
+
+            
             
             let icon = obj.iconPath ? L.icon({
                 iconUrl: obj.iconPath,
-                iconSize: [iconWidth, markerHeight], // Размер иконки
-                iconAnchor: [iconWidth / 8, markerHeight + 0.5*count * markerHeight], // Точка привязки иконки
-                popupAnchor: [0, -markerHeight] // Точка, откуда будет открываться всплывающее окно
+                iconSize: [iconWidth*scale, markerHeight*scale], // Размер иконки
+                iconAnchor: [iconWidth, (markerHeight + 0.5*count * markerHeight)*scale], // Точка привязки иконки
+                popupAnchor: [-iconWidth/2, -(markerHeight + 0.5*count * markerHeight)*scale], // Точка, откуда будет открываться всплывающее окно
             }) : null;
             // Создаем маркер
+            icon.isflag = flag
             let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon } : {})
             marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
             map_object = marker;
+           
             markerCounts[key] = count + 1; // Увеличиваем счетчик для этого маркера
+            
+
+            
             if (!markersByCoords[key]) markersByCoords[key] = [];
             markersByCoords[key].push(marker);
             if (icon && !marker._originalIconOptions) {
@@ -118,9 +127,13 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
                     iconUrl: icon.options.iconUrl,
                     iconSize: icon.options.iconSize,
                     iconAnchor: [iconWidth / 2, markerHeight + 0.5*count * markerHeight], // фиксированная оригинальная anchor
-                    popupAnchor: icon.options.popupAnchor
+                    popupAnchor: [0, -(markerHeight + 0.5*count * markerHeight)*scale],
+                    scale: scale,
+                    flag: flag
                 };
             }
+            
+            
             
         }
         groups[obj.Group].addLayer(map_object);
@@ -158,7 +171,7 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
                             let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
                             contentDiv.innerHTML += html;
                         } else {
-                            let html = `<h3>${items[0]}</h3><p>${items[1][0].Value}</p>`;
+                            let html = `<h3>${items[0]}</h3><p>${items[1][0].Value || ''}</p>`;
                             contentDiv.innerHTML += html;
                     }
                     document.querySelectorAll('.img-container img').forEach(img => {
@@ -193,6 +206,32 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
         }
     });
 
+    let hideButton = document.getElementById('hideAllLayers')
+    let showButton = document.getElementById('showAllLayers')
+
+    showButton.addEventListener('click', function(e) {
+        Object.values(groups).forEach(group => {
+            if (!map.hasLayer(group)) {
+                map.addLayer(group);
+            }
+        })
+        
+        this.classList.toggle('disable');
+        hideButton.classList.toggle('disable');
+        
+    });
+
+    hideButton.addEventListener('click', function(e) {
+        Object.values(groups).forEach(group => {
+            if (map.hasLayer(group)) {
+                map.removeLayer(group);
+            }
+        })
+        
+        this.classList.toggle('disable');
+        showButton.classList.toggle('disable');
+    });
+
 });
 
 var overlayMaps = {
@@ -203,8 +242,7 @@ var overlayMaps = {
 var controlLayers = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
 function resetAllMarkersToOriginal() {
-    console.log("Resetting all markers to original icons");
-    
+
     Object.values(markersByCoords).forEach(markerArr => {
         markerArr.forEach(marker => {
             if (marker._originalIconOptions) {
@@ -221,22 +259,30 @@ function resetAllMarkersToOriginal() {
     });
 }
 map.on('overlayadd overlayremove', function() {
+    
+    resetAllMarkersToOriginal()
     Object.keys(markersByCoords).forEach(key => {
         // Получаем только видимые маркеры на этой точке
         const visibleMarkers = markersByCoords[key].filter(m => map.hasLayer(m));
         let count = 0;
-        visibleMarkers.forEach((marker, idx) => {
-            // Получаем текущую иконку
-            const icon = marker.options.icon;
-            // Создаём новую иконку с обновлённым anchor
-            const newIcon = L.icon({
-                iconUrl: icon.options.iconUrl,
-                iconSize: icon.options.iconSize,
-                iconAnchor: [icon.options.iconSize[0] / 8, icon.options.iconSize[1] + 0.5*count * icon.options.iconSize[1]],
-                popupAnchor: icon.options.popupAnchor
+        
+            visibleMarkers.forEach((marker, idx) => {
+                // Получаем текущую иконку
+                const icon = marker.options.icon;
+                // Создаём новую иконку с обновлённым anchor
+                const newIcon = icon.options.iconUrl !== 'marker-icon.png'  ? L.icon({
+                    iconUrl: icon.options.iconUrl,
+                    iconSize: icon.options.iconSize,
+                    iconAnchor: [icon.options.iconSize[0], icon.options.iconSize[1] + 0.5*count * icon.options.iconSize[1]],
+                    popupAnchor: [0, -(icon.options.iconSize[1] + 0.5*count * icon.options.iconSize[1])]
+                }): null;
+                marker.setIcon(newIcon);
+                count++;
             });
-            marker.setIcon(newIcon);
-            count++;
-        });
+        
+        
     });
 });
+
+
+
