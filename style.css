@@ -181,3 +181,39 @@ div.leaflet-bottom.leaflet-right {
 #showButtons button.disable {
     display: none;
 }
+
+
+
+
+.marker-wrapper {
+  position: relative;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.marker-img {
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+
+.flag-hitbox {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.flag-hitbox:hover + .marker-img {
+    transform: scale(1.2);
+  
+}
+
+.leaflet-marker-icon {
+    pointer-events: none !important;
+    user-select: none;
+    transition: transform 0.3s ease;
+}

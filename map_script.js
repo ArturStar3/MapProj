@@ -104,15 +104,31 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
 
             
             
-            let icon = obj.iconPath ? L.icon({
-                iconUrl: obj.iconPath,
-                iconSize: [iconWidth*scale, markerHeight*scale], // Размер иконки
-                iconAnchor: [iconWidth, (markerHeight + 0.5*count * markerHeight)*scale], // Точка привязки иконки
-                popupAnchor: [-iconWidth/2, -(markerHeight + 0.5*count * markerHeight)*scale], // Точка, откуда будет открываться всплывающее окно
-            }) : null;
+            // let icon = obj.iconPath ? L.icon({
+            //     iconUrl: obj.iconPath,
+            //     iconSize: [iconWidth*scale, markerHeight*scale], // Размер иконки
+            //     iconAnchor: [iconWidth, (markerHeight + 0.5*count * markerHeight)*scale], // Точка привязки иконки
+            //     popupAnchor: [-iconWidth/2, -(markerHeight + 0.5*count * markerHeight)*scale], // Точка, откуда будет открываться всплывающее окно
+            // }) : null;
             // Создаем маркер
+
+            let icon = obj.iconPath ? L.divIcon({
+                className: '',
+                iconSize: [iconWidth * scale, markerHeight * scale],
+                iconAnchor: [iconWidth, (markerHeight + 0.5*count * markerHeight)*scale],
+                popupAnchor: [0, -markerHeight * scale],
+                html: `
+                    <div class="marker-wrapper" style="width:${iconWidth * scale}px; height:${markerHeight * scale}px; pointer-events: none;">
+                        <div class="flag-hitbox" style="pointer-events: auto; width:${iconWidth * scale}px; height:${markerHeight * 0.5 * scale}px; cursor:pointer;"></div>
+                        <img src="${obj.iconPath}" class="marker-img" style="width:100%; height:100%; pointer-events: none;" />
+                    </div>
+                    `
+
+            }) : null;
+
+
             icon.isflag = flag
-            let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon } : {})
+            let marker = L.marker([parseFloat(obj.x), parseFloat(obj.y)], icon ? { icon: icon} : {})
             marker.bindPopup(`<b>${obj.Title}</b><br>${obj.Description}`);
             map_object = marker;
            
@@ -132,70 +148,144 @@ window.loadMapData("data.xlsx", function(data, detail, circles) {
                     flag: flag
                 };
             }
+
+        marker.on('add', function(e) {
+            const el = marker.getElement();
+            const hitbox = el?.querySelector('.flag-hitbox');
+            if (hitbox) {
+                hitbox.addEventListener('click', function(e) {
+                    e.stopPropagation(); // предотвращаем всплытие события клика на маркер
+                    const closeButton = document.querySelector('#content-block .close-button');
+                    const contenBlock = document.querySelector('#content-block');
+                    const contentDiv = document.querySelector('#content');
+                    const head = contenBlock.querySelector('.head h2');
+                    contenBlock.classList.add('show');
+                    head.innerHTML = obj.Title;
+                    try {
+                        const descriptions = detail.get(obj.id);
+                    
+                        contentDiv.innerHTML = '';
+                    
+                        for (items of descriptions) {
+                            if (items[1][0].Category === 'img'){
+                                let img_html = '';
+                                for (item of items[1]) {
+                                    img_html += `<img src="${item.Value}" alt="${obj.Title}">`;
+                                }
+                                const html = `<div class="img-container">${img_html}</div>`;
+                                contentDiv.innerHTML += `<h3>${items[0]}</h3>${html}`;
+                            } else if (items[1].length > 1) {
+                                    let html = `<h3>${items[0]}</h3><ul>`;
+                                    console.log(items[1]);
+                                    items[1].forEach(item => {
+                                        html += `<li><b>${item.Category}</b>: ${item.Value}</li>`;
+                                    })
+                                    html += `</ul>`;
+                                    contentDiv.innerHTML += html;
+                                    
+                                }  else if (items[1][0].Category) {
+                                    let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
+                                    contentDiv.innerHTML += html;
+                                } else {
+                                    let html = `<h3>${items[0]}</h3><p>${items[1][0].Value || ''}</p>`;
+                                    contentDiv.innerHTML += html;
+                            }
+                            document.querySelectorAll('.img-container img').forEach(img => {
+                                img.addEventListener('click', () => {
+                                    if (img.requestFullscreen) {
+                                        img.requestFullscreen();
+                                    } else if (img.webkitRequestFullscreen) { // для Safari
+                                        img.webkitRequestFullscreen();
+                                    } else if (img.msRequestFullscreen) { // для IE11
+                                        img.msRequestFullscreen();
+                                    }
+                                });
+                            });
+                        }
+                    } catch {
+                        html = `<p>Нет подробной информации для этого объекта.</p>`;
+                        contentDiv.innerHTML = html;
+                    }
+
+
+                    closeButton.addEventListener('click', function() {
+                        document.querySelector('#content-block').classList.remove('show');
+                    });
+                    
+                })
+            }
+            
+        });
             
             
             
         }
         groups[obj.Group].addLayer(map_object);
-        map_object.on('click', function(e) {
-            const closeButton = document.querySelector('#content-block .close-button');
-            const contenBlock = document.querySelector('#content-block');
-            const contentDiv = document.querySelector('#content');
-            const head = contenBlock.querySelector('.head h2');
-            contenBlock.classList.add('show');
-            head.innerHTML = obj.Title;
 
-            try {
-                const descriptions = detail.get(obj.id);
+
+
+
+
+        // map_object.on('click', function(e) {
+        //     const closeButton = document.querySelector('#content-block .close-button');
+        //     const contenBlock = document.querySelector('#content-block');
+        //     const contentDiv = document.querySelector('#content');
+        //     const head = contenBlock.querySelector('.head h2');
+        //     contenBlock.classList.add('show');
+        //     head.innerHTML = obj.Title;
+
+        //     try {
+        //         const descriptions = detail.get(obj.id);
             
-                contentDiv.innerHTML = '';
+        //         contentDiv.innerHTML = '';
             
-                for (items of descriptions) {
-                    if (items[1][0].Category === 'img'){
-                        let img_html = '';
-                        for (item of items[1]) {
-                            img_html += `<img src="${item.Value}" alt="${obj.Title}">`;
-                        }
-                        const html = `<div class="img-container">${img_html}</div>`;
-                        contentDiv.innerHTML += `<h3>${items[0]}</h3>${html}`;
-                    } else if (items[1].length > 1) {
-                            let html = `<h3>${items[0]}</h3><ul>`;
-                            console.log(items[1]);
-                            items[1].forEach(item => {
-                                html += `<li><b>${item.Category}</b>: ${item.Value}</li>`;
-                            })
-                            html += `</ul>`;
-                            contentDiv.innerHTML += html;
+        //         for (items of descriptions) {
+        //             if (items[1][0].Category === 'img'){
+        //                 let img_html = '';
+        //                 for (item of items[1]) {
+        //                     img_html += `<img src="${item.Value}" alt="${obj.Title}">`;
+        //                 }
+        //                 const html = `<div class="img-container">${img_html}</div>`;
+        //                 contentDiv.innerHTML += `<h3>${items[0]}</h3>${html}`;
+        //             } else if (items[1].length > 1) {
+        //                     let html = `<h3>${items[0]}</h3><ul>`;
+        //                     console.log(items[1]);
+        //                     items[1].forEach(item => {
+        //                         html += `<li><b>${item.Category}</b>: ${item.Value}</li>`;
+        //                     })
+        //                     html += `</ul>`;
+        //                     contentDiv.innerHTML += html;
                             
-                        }  else if (items[1][0].Category) {
-                            let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
-                            contentDiv.innerHTML += html;
-                        } else {
-                            let html = `<h3>${items[0]}</h3><p>${items[1][0].Value || ''}</p>`;
-                            contentDiv.innerHTML += html;
-                    }
-                    document.querySelectorAll('.img-container img').forEach(img => {
-                        img.addEventListener('click', () => {
-                            if (img.requestFullscreen) {
-                                img.requestFullscreen();
-                            } else if (img.webkitRequestFullscreen) { // для Safari
-                                img.webkitRequestFullscreen();
-                            } else if (img.msRequestFullscreen) { // для IE11
-                                img.msRequestFullscreen();
-                            }
-                        });
-                    });
-                }
-            } catch {
-                html = `<p>Нет подробной информации для этого объекта.</p>`;
-                contentDiv.innerHTML = html;
-            }
+        //                 }  else if (items[1][0].Category) {
+        //                     let html = `<h3>${items[0]}</h3><p><b>${items[1][0].Category}</b>: ${items[1][0].Value}</p>`;
+        //                     contentDiv.innerHTML += html;
+        //                 } else {
+        //                     let html = `<h3>${items[0]}</h3><p>${items[1][0].Value || ''}</p>`;
+        //                     contentDiv.innerHTML += html;
+        //             }
+        //             document.querySelectorAll('.img-container img').forEach(img => {
+        //                 img.addEventListener('click', () => {
+        //                     if (img.requestFullscreen) {
+        //                         img.requestFullscreen();
+        //                     } else if (img.webkitRequestFullscreen) { // для Safari
+        //                         img.webkitRequestFullscreen();
+        //                     } else if (img.msRequestFullscreen) { // для IE11
+        //                         img.msRequestFullscreen();
+        //                     }
+        //                 });
+        //             });
+        //         }
+        //     } catch {
+        //         html = `<p>Нет подробной информации для этого объекта.</p>`;
+        //         contentDiv.innerHTML = html;
+        //     }
 
 
-            closeButton.addEventListener('click', function() {
-                document.querySelector('#content-block').classList.remove('show');
-            });
-        });
+        //     closeButton.addEventListener('click', function() {
+        //         document.querySelector('#content-block').classList.remove('show');
+        //     });
+        // });
+
     });
 
     Object.keys(groups).forEach(groupName => {
@@ -283,6 +373,9 @@ map.on('overlayadd overlayremove', function() {
         
     });
 });
+
+
+
 
 
 
